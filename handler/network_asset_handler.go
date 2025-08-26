@@ -162,6 +162,42 @@ func (h *NetworkAssetHandler) SearchByDNSHostName(c echo.Context) error {
 		Limit:      limit,
 	})
 }
+func (h *NetworkAssetHandler) CheckExistByDNSHostName(c echo.Context) error {
+	dnsHostName := c.QueryParam("dns_hostname")
+
+	if dnsHostName == "" {
+		return c.JSON(http.StatusBadRequest, model.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "DNS hostname parameter is required",
+			Data:       nil,
+		})
+	}
+
+	// Get assets by DNS hostname
+	isExist, err := h.NetworkAssetRepo.GetIPEndpointByDNSHostName(c.Request().Context(), dnsHostName)
+	if err != nil {
+		log.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to search by DNS hostname",
+			Data:       nil,
+		})
+	}
+	if isExist {
+		return c.JSON(http.StatusOK, model.Response{
+			StatusCode: http.StatusOK,
+			Message:    "DNS hostname exists",
+			Data:       nil,
+		})
+	} else {
+		return c.JSON(http.StatusNotFound, model.Response{
+			StatusCode: http.StatusNotFound,
+			Message:    "DNS hostname does not exist",
+			Data:       nil,
+		})
+	}
+}
+
 func (h *NetworkAssetHandler) SearchNetworkAssets(c echo.Context) error {
 	var filter model.NetworkAssetFilter
 

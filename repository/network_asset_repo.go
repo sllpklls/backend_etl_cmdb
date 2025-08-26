@@ -17,4 +17,6 @@ type NetworkAssetRepo interface {
 	CreateNetworkAsset(ctx context.Context, asset model.NetworkAsset) error
 	UpdateNetworkAsset(ctx context.Context, name string, asset model.NetworkAsset) error
 	DeleteNetworkAsset(ctx context.Context, name string) error
+
+	GetIPEndpointByDNSHostName(ctx context.Context, dnsHostName string) (bool, error)
 }

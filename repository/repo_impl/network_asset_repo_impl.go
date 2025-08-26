@@ -2,6 +2,7 @@ package repo_impl
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -148,85 +149,23 @@ func (r *NetworkAssetRepoImpl) GetTotalNetworkAssetsByDNSHostName(ctx context.Co
 
 	return total, nil
 }
+func (r *NetworkAssetRepoImpl) GetIPEndpointByDNSHostName(ctx context.Context, dnsHostName string) (bool, error) {
+	query := `
+		SELECT 1
+		FROM NetworkAssets 
+		WHERE dnshostname = $1
+		LIMIT 1`
 
-func (r *NetworkAssetRepoImpl) GetNetworkAssetsByFilter(ctx context.Context, filter model.NetworkAssetFilter) ([]model.NetworkAssetList, error) {
-	var conditions []string
-	var args []interface{}
-	argIndex := 1
-
-	baseQuery := `
-		SELECT name, systemname, address, shortdescription, protocoltype, 
-		       addresstype, dnshostname, createdate
-		FROM NetworkAssets`
-
-	if filter.Name != "" {
-		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.Name+"%")
-		argIndex++
-	}
-
-	if filter.Address != "" {
-		conditions = append(conditions, fmt.Sprintf("address ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.Address+"%")
-		argIndex++
-	}
-
-	if filter.ProtocolType != "" {
-		conditions = append(conditions, fmt.Sprintf("protocoltype = $%d", argIndex))
-		args = append(args, filter.ProtocolType)
-		argIndex++
-	}
-
-	if filter.AddressType != "" {
-		conditions = append(conditions, fmt.Sprintf("addresstype = $%d", argIndex))
-		args = append(args, filter.AddressType)
-		argIndex++
-	}
-
-	if filter.DatasetId > 0 {
-		conditions = append(conditions, fmt.Sprintf("datasetid = $%d", argIndex))
-		args = append(args, filter.DatasetId)
-		argIndex++
-	}
-
-	if len(conditions) > 0 {
-		baseQuery += " WHERE " + strings.Join(conditions, " AND ")
-	}
-
-	baseQuery += " ORDER BY createdate DESC"
-
-	if filter.Limit > 0 {
-		offset := (filter.Page - 1) * filter.Limit
-		baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
-		args = append(args, filter.Limit, offset)
-	}
-
-	rows, err := r.sql.Db.QueryContext(ctx, baseQuery, args...)
+	var exists int
+	err := r.sql.Db.QueryRowContext(ctx, query, dnsHostName).Scan(&exists)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query network assets with filter: %w", err)
-	}
-	defer rows.Close()
-
-	var assets []model.NetworkAssetList
-	for rows.Next() {
-		var asset model.NetworkAssetList
-		err := rows.Scan(
-			&asset.Name,
-			&asset.SystemName,
-			&asset.Address,
-			&asset.ShortDescription,
-			&asset.ProtocolType,
-			&asset.AddressType,
-			&asset.DNSHostName,
-			&asset.CreateDate,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan network asset: %w", err)
+		if err == sql.ErrNoRows {
+			return false, nil
 		}
-		assets = append(assets, asset)
+		return false, fmt.Errorf("failed to query network assets by DNS hostname: %w", err)
 	}
 
-	return assets, nil
+	return true, nil
 }
 
 func (r *NetworkAssetRepoImpl) GetTotalNetworkAssets(ctx context.Context) (int, error) {
@@ -289,6 +228,79 @@ func (r *NetworkAssetRepoImpl) GetTotalNetworkAssetsByFilter(ctx context.Context
 	}
 
 	return total, nil
+}
+func (r *NetworkAssetRepoImpl) GetNetworkAssetsByFilter(ctx context.Context, filter model.NetworkAssetFilter) ([]model.NetworkAssetList, error) {
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
+
+	baseQuery := `
+		SELECT name, systemname, address, shortdescription, protocoltype, 
+		       addresstype, dnshostname, createdate
+		FROM NetworkAssets`
+
+	if filter.Name != "" {
+		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.Name+"%")
+		argIndex++
+	}
+
+	if filter.Address != "" {
+		conditions = append(conditions, fmt.Sprintf("address ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.Address+"%")
+		argIndex++
+	}
+
+	if filter.ProtocolType != "" {
+		conditions = append(conditions, fmt.Sprintf("protocoltype = $%d", argIndex))
+		args = append(args, filter.ProtocolType)
+		argIndex++
+	}
+
+	if filter.AddressType != "" {
+		conditions = append(conditions, fmt.Sprintf("addresstype = $%d", argIndex))
+		args = append(args, filter.AddressType)
+		argIndex++
+	}
+
+	if filter.DatasetId > 0 {
+		conditions = append(conditions, fmt.Sprintf("datasetid = $%d", argIndex))
+		args = append(args, filter.DatasetId)
+		argIndex++
+	}
+
+	if len(conditions) > 0 {
+		baseQuery += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	baseQuery += " ORDER BY createdate DESC"
+
+	rows, err := r.sql.Db.QueryContext(ctx, baseQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query network assets with filter: %w", err)
+	}
+	defer rows.Close()
+
+	var assets []model.NetworkAssetList
+	for rows.Next() {
+		var asset model.NetworkAssetList
+		err := rows.Scan(
+			&asset.Name,
+			&asset.SystemName,
+			&asset.Address,
+			&asset.ShortDescription,
+			&asset.ProtocolType,
+			&asset.AddressType,
+			&asset.DNSHostName,
+			&asset.CreateDate,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan network asset: %w", err)
+		}
+		assets = append(assets, asset)
+	}
+
+	return assets, nil
 }
 
 func (r *NetworkAssetRepoImpl) CreateNetworkAsset(ctx context.Context, asset model.NetworkAsset) error {
