@@ -59,7 +59,7 @@ func main() {
 	}
 	api.SetupRouter()
 
-	e.Logger.Fatal(e.Start(":3002"))
+	e.Logger.Fatal(e.Start(":3000"))
 }
 
 // helper: lấy env hoặc fallback sang default

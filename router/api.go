@@ -22,7 +22,7 @@ func (api *API) SetupRouter() {
 
 	// api.Echo.GET("/list/ci", api.UserHandler.ListCI, middleware.JWTMiddleware())
 	v1 := api.Echo.Group("/api/v1")
-	// v1.Use(middleware.JWTMiddleware()) // Uncomment nếu cần JWT protection
+	v1.Use(middleware.JWTMiddleware()) // Uncomment nếu cần JWT protection
 
 	v1.GET("/network-assets", api.NetworkAssetHandler.GetAllNetworkAssets)
 	v1.GET("/network-assets/search", api.NetworkAssetHandler.SearchNetworkAssets)

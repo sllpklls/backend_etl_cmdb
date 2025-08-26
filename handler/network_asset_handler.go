@@ -190,8 +190,8 @@ func (h *NetworkAssetHandler) CheckExistByDNSHostName(c echo.Context) error {
 			Data:       nil,
 		})
 	} else {
-		return c.JSON(http.StatusNotFound, model.Response{
-			StatusCode: http.StatusNotFound,
+		return c.JSON(http.StatusOK, model.Response{
+			StatusCode: http.StatusOK,
 			Message:    "DNS hostname does not exist",
 			Data:       nil,
 		})
