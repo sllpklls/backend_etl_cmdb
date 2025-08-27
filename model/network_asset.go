@@ -35,6 +35,7 @@ type NetworkAssetFilter struct {
 	Address      string `json:"address,omitempty" query:"address"`
 	ProtocolType string `json:"protocol_type,omitempty" query:"protocol_type"`
 	AddressType  string `json:"address_type,omitempty" query:"address_type"`
+	DnsHostname  string `json:"dns_host_name,omitempty" query:"dns_host_name"`
 	DatasetId    int    `json:"dataset_id,omitempty" query:"dataset_id"`
 	Page         int    `json:"page" query:"page"`
 	Limit        int    `json:"limit" query:"limit"`

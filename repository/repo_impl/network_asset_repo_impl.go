@@ -226,7 +226,7 @@ func (r *NetworkAssetRepoImpl) GetTotalNetworkAssetsByFilter(ctx context.Context
 	if err != nil {
 		return 0, fmt.Errorf("failed to get total network assets by filter: %w", err)
 	}
-
+	// log.Info(total)
 	return total, nil
 }
 func (r *NetworkAssetRepoImpl) GetNetworkAssetsByFilter(ctx context.Context, filter model.NetworkAssetFilter) ([]model.NetworkAssetList, error) {
@@ -262,7 +262,11 @@ func (r *NetworkAssetRepoImpl) GetNetworkAssetsByFilter(ctx context.Context, fil
 		args = append(args, filter.AddressType)
 		argIndex++
 	}
-
+	if filter.DnsHostname != "" {
+		conditions = append(conditions, fmt.Sprintf("dnshostname ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.DnsHostname+"%")
+		argIndex++
+	}
 	if filter.DatasetId > 0 {
 		conditions = append(conditions, fmt.Sprintf("datasetid = $%d", argIndex))
 		args = append(args, filter.DatasetId)

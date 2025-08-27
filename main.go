@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -37,6 +39,27 @@ func main() {
 	defer sql.Close()
 
 	e := echo.New()
+
+	// ✅ Log request (method, endpoint, IP)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			start := time.Now()
+
+			err := next(c)
+
+			fmt.Printf("📥 %s %s | query=%s | ip=%s | ua=%s | status=%d | time=%v\n",
+				c.Request().Method,
+				c.Request().URL.Path,
+				c.Request().URL.RawQuery,
+				c.RealIP(),
+				c.Request().UserAgent(),
+				c.Response().Status,
+				time.Since(start),
+			)
+
+			return err
+		}
+	})
 
 	// ✅ Bật CORS full (mọi domain, mọi method, mọi header)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
